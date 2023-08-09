@@ -1,0 +1,416 @@
+@import url("https://fonts.googleapis.com/css2?family=Aldrich&family=Josefin+Sans&family=Rubik&display=swap");
+
+* {
+  padding: 0;
+  margin: 0;
+  font-family: Aldrich, Rubik, Josefin Sans, Arial, sans-serif;
+}
+
+:root {
+  --background: #0b032e;
+  --outline: #4b4487;
+  --foreground: #efce54;
+  --players-case: #8679ef;
+  --opened: #b3a05b;
+  --revealed: #b3a05b;
+  --highlight: #ffeca8;
+  --deal: #7eae1d;
+  --no-deal: rgb(255, 89, 89);
+
+  --choice-animation-duration: 2s;
+  --case-open-duration: 4s;
+  --value-reveal-duration: 3s;
+  --show-deal-duration: 2s;
+  --yes-no-duration: 1s;
+  --players-value-duration: 4s;
+}
+
+body {
+  height: 100vh;
+  background-color: var(--background);
+  overflow: hidden;
+}
+
+#container {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: 1fr 2fr; /* Two equal columns */
+  grid-template-rows: 2fr 1fr; /* Auto-sized rows */
+  grid-template-areas:
+    "values cases"
+    "values deal";
+
+  gap: 20px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+#container > * {
+  outline: 3px solid var(--outline);
+  border-radius: 10px;
+}
+
+#value-container {
+  grid-area: values;
+
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  padding: 5px;
+}
+
+.value-col {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.value {
+  height: 100%;
+  width: 100%;
+  border-radius: 5px;
+  background-color: var(--foreground);
+
+  display: grid;
+}
+.value.revealed {
+  --rotation: 15deg;
+  animation-name: reveal-value-spin;
+  animation-duration: var(--value-reveal-duration);
+  animation-delay: var(--case-open-duration);
+  animation-timing-function: ease;
+  animation-fill-mode: forwards;
+}
+#players-value {
+  animation-name: reveal-players-value;
+  animation-timing-function: ease;
+  animation-duration: var(--players-value-duration);
+  animation-delay: calc(
+    var(--case-open-duration) + var(--value-reveal-duration)
+  );
+  animation-fill-mode: forwards;
+}
+.value-text {
+  place-self: center;
+  width: fit-content;
+  height: fit-content;
+  font-size: 20px;
+}
+@keyframes reveal-players-value {
+  0% {
+    z-index: 1000;
+  }
+  20% {
+    scale: 1.5;
+  }
+  100% {
+    background-color: var(--players-case);
+  }
+}
+@keyframes reveal-value-wiggle {
+  0% {
+    z-index: 1000;
+  }
+  20%,
+  60% {
+    rotate: calc(-1 * var(--rotation));
+  }
+  50% {
+    scale: 1.5;
+  }
+  40%,
+  80% {
+    rotate: var(--rotation);
+  }
+  100% {
+    scale: 1;
+    background-color: var(--revealed);
+    z-index: 1;
+  }
+}
+@keyframes reveal-value-spin {
+  0% {
+    z-index: 1000;
+  }
+  25% {
+    scale: 1.5;
+    background-color: var(--highlight);
+    rotate: 0turn;
+  }
+  75% {
+    rotate: 1.02turn;
+  }
+  90% {
+    rotate: 0.995turn;
+  }
+  100% {
+    scale: 1;
+    rotate: 1turn;
+    background-color: var(--revealed);
+    z-index: 1;
+  }
+}
+
+#case-container {
+  grid-area: cases;
+  display: flex;
+  flex-direction: column;
+  --gap: 8px;
+  gap: var(--gap);
+  padding: 5px;
+  box-sizing: border-box;
+}
+.case-row {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: var(--gap);
+}
+.suitcase {
+  height: 100%;
+  width: 100%;
+  z-index: 10;
+  position: relative;
+  border-radius: 5px;
+}
+.suitcase-content {
+  transition: 500ms;
+  cursor: pointer;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  transform-style: preserve-3d;
+  perspective: 2px;
+}
+.suitcase-front,
+.suitcase-back {
+  transition: 500ms;
+  border-radius: 5px;
+  display: grid;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+}
+.suitcase-front {
+  z-index: 3;
+  background-color: var(--foreground);
+}
+.suitcase-back {
+  z-index: 2;
+  background-color: var(--opened);
+  transform: rotateY(0.5turn);
+}
+.suitcase.opened .suitcase-content {
+  cursor: default;
+  animation: open-suitcase var(--case-open-duration) ease forwards;
+}
+.suitcase.opened .suitcase-content {
+  cursor: default;
+}
+.suitcase.players .suitcase-content {
+  cursor: default;
+  --rotation: 15deg;
+  animation: players-choice var(--choice-animation-duration) ease forwards;
+}
+.suitcase.players .suitcase-front {
+  animation: players-choice-colors var(--choice-animation-duration) ease
+    forwards;
+}
+.suitcase.players {
+  animation: z-index-control var(--choice-animation-duration) ease forwards;
+}
+.suitcase:not(.opened, .players):hover {
+  z-index: 100;
+}
+.suitcase:not(.opened, .players):hover .suitcase-content {
+  scale: 1.2;
+  transition: 200ms;
+}
+.suitcase:not(.opened, .players):hover .suitcase-content > * {
+  background-color: var(--highlight);
+  transition: 200ms;
+}
+@keyframes open-suitcase {
+  90% {
+    transform: rotateZ(-1.005turn) rotateY(0.49turn) rotateX(1.01turn);
+  }
+  100% {
+    transform: rotateZ(-1turn) rotateY(0.5turn) rotateX(1turn);
+  }
+}
+@keyframes players-choice {
+  0% {
+    scale: 1.2;
+    background-color: var(--highlight);
+  }
+  20%,
+  60% {
+    rotate: calc(-1 * var(--rotation));
+  }
+  40%,
+  80% {
+    rotate: var(--rotation);
+  }
+  50% {
+    scale: 1.5;
+  }
+  100% {
+    background-color: var(--players-case);
+    scale: 1;
+  }
+}
+@keyframes players-choice-colors {
+  0% {
+    background-color: var(--highlight);
+  }
+  100% {
+    background-color: var(--players-case);
+  }
+}
+@keyframes z-index-control {
+  0% {
+    z-index: 1000;
+  }
+  99.9% {
+    z-index: 1000;
+  }
+  100% {
+    z-index: 1;
+  }
+}
+
+.suitcase-number {
+  place-self: center;
+  width: fit-content;
+  height: fit-content;
+  font-size: 32px;
+}
+.suitcase-value {
+  place-self: center;
+  width: fit-content;
+  height: fit-content;
+  font-size: 20px;
+}
+#players-suitcase.suitcase-value {
+  position: absolute;
+  bottom: 10px;
+}
+
+#deal-container {
+  grid-area: deal;
+  padding: 5px;
+  box-sizing: border-box;
+  background-color: var(--foreground);
+  border: 4px solid var(--background);
+  display: grid;
+  position: relative;
+  border-radius: 10px;
+  width: 50%;
+  justify-self: center;
+}
+#banker-heading {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 100%;
+  text-align: center;
+  transform: translateX(-50%);
+  font-weight: normal;
+  font-size: 20px;
+  margin-top: 20px;
+}
+#deal-counter {
+  place-self: center;
+  font-size: 20px;
+  border-radius: 5px;
+  padding: 20px 40px;
+  font-size: 56px;
+  outline: 3px solid var(--background);
+}
+#deal-value {
+  place-self: center;
+  font-size: 20px;
+  border-radius: 5px;
+  padding: 8px;
+  font-size: 56px;
+  outline: 3px solid var(--background);
+  scale: 0;
+  transform: translateY(200px);
+
+  animation-timing-function: ease;
+  animation-duration: var(--show-deal-duration);
+  animation-name: show-deal;
+  animation-delay: calc(
+    var(--case-open-duration) + var(--value-reveal-duration)
+  );
+  animation-fill-mode: forwards;
+}
+#deal-yn {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  text-align: center;
+  font-weight: normal;
+  font-size: 20px;
+  margin: 10px 0px;
+
+  display: flex;
+  justify-content: center;
+}
+#deal-yn > * {
+  outline: 2px solid var(--background);
+  padding: 8px;
+  margin: 0 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 300ms;
+  position: relative;
+  scale: 0;
+  transform-origin: center center;
+
+  animation-timing-function: ease;
+  animation-duration: var(--yes-no-duration);
+  animation-name: yes-no-animation;
+  animation-fill-mode: forwards;
+}
+#deal-yes {
+  transform: translateX(-100%);
+  animation-delay: calc(
+    var(--case-open-duration) + var(--value-reveal-duration) +
+      var(--show-deal-duration)
+  );
+}
+#deal-no {
+  transform: translateX(100%);
+  animation-delay: calc(
+    var(--case-open-duration) + var(--value-reveal-duration) +
+      var(--show-deal-duration) + var(--yes-no-duration)
+  );
+}
+#deal-yes:hover {
+  background-color: var(--deal);
+}
+#deal-no:hover {
+  background-color: var(--no-deal);
+}
+@keyframes show-deal {
+  100% {
+    scale: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes yes-no-animation {
+  100% {
+    scale: 1;
+    transform: translateX(0);
+  }
+}
